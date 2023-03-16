@@ -1,15 +1,53 @@
-# API - É um lugar para disponibilizar recursos e/ou funcionalidades
-# Para criarmos uma API temos que ter em Mente
-# 1 Objetivo - Criar uma API que disponibiliza a consulta, criação, edição e exclusão de livros.
-# 2 URL base - no caso será localhost, mas geralmente é tipo google.com/api/serviços
-# 3 Endpoints - 
-  # - localhost/livros (GET)
-  # - localhost/livros (POST)
-  # - localhost/livros/ id (GET)
-  # - localhost/livros/ id (PUT)
-  # - localhost/livros (DELETE)
-# 4 Quais recursos - Livros
-
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
+
+#Create an empty list and open the file by adding its id and in the dictionary
+books = []
+with open("books.txt", "r") as file:
+  id = 1
+  for line in file:
+    values = line.strip().split(', ')
+    book = {"id": id, "titulo": values[0], "autor": values[1], "ano": values[2]}
+    books.append(book)
+    id += 1
+
+#Consult 
+@app.route('/books', methods=['GET'])
+def obtain_books():
+  return jsonify(books)
+
+#Consult by ID
+@app.route('/books/<int:id>', methods=['GET'])
+def obtain_books_id(id):
+  for book in books:
+    if book.get('id') == id:
+      return jsonify(book)
+
+#Edit
+@app.route('/books/<int:id>', methods=['PUT'])
+def edit_book_id(id):
+  edit_book = request.get_json()
+  for indice,book in enumerate(books):
+    if book.get('id') == id:
+      books[indice].update(edit_book)
+      return jsonify(books[indice])
+
+#Create
+@app.route('/books/add', methods=['POST'])
+def add_book():
+  new_book = request.get_json()
+  books.append(new_book)
+
+  return jsonify(books)
+
+# Delete
+@app.route('/books/<int:id>', methods=['DELETE'])
+def delet_book(id):
+  for indice,book in enumerate(books):
+    if book.get('id') == id:
+      del books[indice]
+    
+  return jsonify(books)
+
+app.run(port=5000, host='localhost', debug=True)
